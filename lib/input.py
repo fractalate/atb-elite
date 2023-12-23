@@ -20,6 +20,19 @@ class InputState():
         self.state = 0
 
     # Returns true if this input is triggered and should send.
+    #
+    # When pressed:
+    #
+    #           +----------------------------+
+    #           |                            |  start
+    #       <trigger>                        |    |
+    #           |                            v    v
+    #  -TICKS_HOLD_REPEAT-1 <- ... <- -2 <- -1 -- 0 -> 1 -> 2 -> 3 -> ... -> TICKS_HOLD
+    #                                        ^                                    |
+    #                                        |                                <trigger>
+    #                                        |                                    |
+    #                                        +------------------------------------+
+    #
     def tick(self, pressed):
         result = False
         if pressed:
