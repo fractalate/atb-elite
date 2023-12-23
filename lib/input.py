@@ -10,8 +10,10 @@ RIGHT = 'RIGHT'
 CONFIRM = 'Confirm'
 CANCEL = 'Cancel'
 
-FRAMES_HOLD = lib.sys.FRAME_RATE // 4
-FRAMES_HOLD_REPEAT = lib.sys.FRAME_RATE // 8
+# Desired to feel like you've held the button for emphasis with the intention of repeating.
+TICKS_HOLD = lib.sys.FRAME_RATE // 2
+# Desired to be quite rapid feeling.
+TICKS_HOLD_REPEAT = lib.sys.FRAME_RATE // 16
 
 class InputState():
     def __init__(self):
@@ -26,12 +28,12 @@ class InputState():
                 self.state += 1
             elif self.state > 0:
                 self.state += 1
-                if self.state > FRAMES_HOLD:
+                if self.state > TICKS_HOLD:
                     self.state = -1
                     result = True
             else:
                 self.state -= 1
-                if self.state < -FRAMES_HOLD_REPEAT - 1:
+                if self.state < -TICKS_HOLD_REPEAT - 1:
                     self.state = -1
                     result = True
         else:

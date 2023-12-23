@@ -4,17 +4,18 @@ Chiefly, this is used for the positioning of text and dialogs.
 
 IMPORTANT:
 
-Some sane defaults are set for GRID_STEP_X and GRID_STEP_Y, but if the
-resolution of the game is ever not 1024x768, then the values will be wrong.
-Always call lib.grid.init().
+Always call lib.grid.init() in case resolutions are dynamic at some later stage
+of development.
 '''
 
 import pygame
 
+import lib.sys
+
 GRID_COLS = 32
 GRID_ROWS = 24
-GRID_STEP_X = 1024 // GRID_COLS # Don't forget to call init().
-GRID_STEP_Y = 768 // GRID_ROWS # Don't forget call init().
+GRID_STEP_X = lib.sys.DISPLAY_WIDTH // GRID_COLS # Don't forget to call init().
+GRID_STEP_Y = lib.sys.DISPLAY_HEIGHT // GRID_ROWS # Don't forget call init().
 
 def init(surface: pygame.Surface):
     global GRID_STEP_X
@@ -26,6 +27,7 @@ def init(surface: pygame.Surface):
 def toScreen(coordinate: tuple[int, int]):
     return (coordinate[0] * GRID_STEP_X, coordinate[1] * GRID_STEP_Y)
 
+# Useful for debugging.
 def draw(surface: pygame.Surface):
     width, height = surface.get_size()
     for y in range(GRID_ROWS):

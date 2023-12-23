@@ -19,6 +19,9 @@ class CursorSelector():
             if self.position < self.count - 1:
                 self.position += 1
 
+    def tick(self):
+        pass
+
     def render(self, surface: pygame.Surface, gcoord: tuple[int, int]):
         x, y = gcoord
         y += self.position
