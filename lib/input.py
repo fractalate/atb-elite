@@ -23,15 +23,12 @@ class InputState():
     #
     # When pressed:
     #
-    #           +----------------------------+
-    #           |                            |  start
-    #       <trigger>                        |    |
-    #           |                            v    v
-    #  -TICKS_HOLD_REPEAT-1 <- ... <- -2 <- -1 -- 0 -> 1 -> 2 -> 3 -> ... -> TICKS_HOLD
-    #                                        ^                                    |
-    #                                        |                                <trigger>
-    #                                        |                                    |
-    #                                        +------------------------------------+
+    #  start                  -1 -> -2 -> ... -> -TICKS_HOLD_REPEAT-1
+    #    |                     ^                          |
+    #   <x>                    |                          |
+    #    |                    <x>-------------------------+
+    #    v                     |
+    #    0 -> 1 -> ... -> TICKS_HOLD
     #
     def tick(self, pressed):
         result = False
