@@ -122,5 +122,11 @@ class DialogStack():
 def posEnemyList():
     return (0, 20, 18, 4)
 
+def sizeEnemyNameInEnemyList():
+    return (18, 1)
+
 def posPlayerList():
     return (18, 20, 14, 4)
+
+def sizePlayerNameInPlayerList():
+    return (6, 1)
