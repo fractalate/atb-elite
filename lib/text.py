@@ -1,9 +1,11 @@
 import pygame
 
+from functools import cache
+
 import lib.grid
 
-GAME_FONT = pygame.font.SysFont('Courier New', 40, True)
-FONT_ALIGN_HORIZONTAL = 3
+GAME_FONT = pygame.font.SysFont('Courier New', 40, True) # XXX: Bundle a basic font, perhaps.
+FONT_ALIGN_HORIZONTAL = 4
 FONT_ALIGN_VERTICAL = -3
 
 def streamPositionedCharacters(text: str):
@@ -17,6 +19,7 @@ def streamPositionedCharacters(text: str):
             yield x, y, c
             x += 1
 
+@cache
 def renderCharacter(ch: str):
     antialias = 1
     return GAME_FONT.render(ch, antialias, (0xFF, 0xFF, 0xFF))

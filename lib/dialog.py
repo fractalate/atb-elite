@@ -4,6 +4,8 @@ import lib.cursor
 import lib.grid
 import lib.text
 
+BORDER_WIDTH = BORDER_HEIGHT = 2
+
 # XXX: Remove if not useful.
 def shrinkRect(rect: pygame.Rect):
     x, y, width, height = rect
@@ -38,7 +40,8 @@ class Dialog():
     def setText(self, text: str):
         self.text = lib.text.RenderText(self.grect[2:4], text)
         return self
-    
+
+    # This function is not for mortals. Probably you want DialogPromptSelection().
     def setSelector(self, selector: lib.cursor.CursorSelector, selectorOffset = 0):
         self.selector = selector
         self.selectorOffset = selectorOffset
@@ -76,9 +79,12 @@ class Dialog():
 
 def DialogPromptSelection(prompt: str, options: list[str], grect: tuple[int, int, int, int]):
     # XXX: If the full selection of items is not available, raise an error.
-    lines = len(prompt.split('\n'))
+    lines = len(prompt.split('\n')) if prompt else 0
     for item in options:
         prompt += '\n ' + item
+    # Skip initial \n from the first item if there is no prompt.
+    if lines == 0:
+        prompt = prompt[1:]
     dialog = Dialog(grect)
     dialog.setText(prompt)
     _, y, _, height = grect
@@ -114,7 +120,7 @@ class DialogStack():
             dialog.render(surface)
 
 def posEnemyList():
-    return (0, 20, 20, 4)
+    return (0, 20, 18, 4)
 
 def posPlayerList():
-    return (20, 20, 12, 4)
+    return (18, 20, 14, 4)

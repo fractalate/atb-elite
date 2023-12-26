@@ -9,6 +9,7 @@ LEFT = 'LEFT'
 RIGHT = 'RIGHT'
 CONFIRM = 'Confirm'
 CANCEL = 'Cancel'
+DEBUG1 = 'Debug1'
 
 # Desired to feel like you've held the button for emphasis with the intention of repeating.
 TICKS_HOLD = lib.sys.FRAME_RATE // 2
@@ -58,6 +59,7 @@ class Input():
         self.key_right = InputState()
         self.key_confirm = InputState()
         self.key_cancel = InputState()
+        self.debug1 = InputState()
 
     def tick(self):
         pressed = pygame.key.get_pressed()
@@ -73,3 +75,5 @@ class Input():
             yield CANCEL
         if self.key_confirm.tick(pressed[pygame.K_RETURN]):
             yield CONFIRM
+        if self.debug1.tick(pressed[pygame.K_F1]):
+            yield DEBUG1

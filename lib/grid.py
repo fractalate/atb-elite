@@ -34,3 +34,9 @@ def draw(surface: pygame.Surface):
         pygame.draw.line(surface, 0xFFFFFF, (0, y * GRID_STEP_Y), (width, y * GRID_STEP_Y))
     for x in range(GRID_COLS):
         pygame.draw.line(surface, 0xFFFFFF, (x * GRID_STEP_X, 0), (x * GRID_STEP_X, height))
+
+def checkBounds(rect: tuple[int, int, int, int], bounds: tuple[int, int]):
+    x, y, width, height = rect
+    bw, bh = bounds
+    if x < 0 or y < 0 or x + width > bw or y + height > bh:
+        raise Exception('rect out of bounds')
