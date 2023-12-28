@@ -1,5 +1,5 @@
 # Frames per second.
-FRAME_RATE = 60
+FRAME_RATE = 30
 # Pixels.
 DISPLAY_WIDTH = 1024
 # Pixels.

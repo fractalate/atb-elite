@@ -151,8 +151,10 @@ class BattleFighter():
         self.cells = cells
         if faction == FACTION_PLAYER:
             self.bar = lib.bar.ProgressBar(calculateFramesForSpd(fighter.spd))
+            self.nameText = lib.text.PalletteText(lib.dialog.sizePlayerNameInPlayerList(), self.name)
         else:
             self.bar = None
+            self.nameText = lib.text.PalletteText(lib.dialog.sizeEnemyNameInEnemyList(), self.name)
 
 class Battle():
     def __init__(self):
@@ -196,11 +198,10 @@ class Battle():
         otherFighterNo = 0
         for fighter in self.fighters:
             if fighter.faction != FACTION_PLAYER:
-                # XXX: Inefficient rendering here! I want to reserve the right to render white, yellow, and red text on-the-fly and I don't want to settle on an approach for that yet.
                 col, row, _, height = lib.dialog.posEnemyList()
                 nameWidth, _ = lib.dialog.sizeEnemyNameInEnemyList()
                 if otherFighterNo < height:
-                    lib.text.hackRenderText(surface, (col, row + otherFighterNo) + (nameWidth, 1), fighter.name)
+                    fighter.nameText.render(surface, (col, row + otherFighterNo))
                     otherFighterNo += 1
 
         ### --- Render Player List ----------------------------------------- ###
@@ -209,17 +210,16 @@ class Battle():
         playerFighterNo = 0
         for fighter in self.fighters:
             if fighter.faction == FACTION_PLAYER:
-                # XXX: Inefficient rendering here! I want to reserve the right to render white, yellow, and red text on-the-fly and I don't want to settle on an approach for that yet.
                 col, row, _, _ = lib.dialog.posPlayerList()
                 if fighter.fighter.hp == 0:
-                    color = (0xFF, 0x11, 0x11) # Red - Dead.
+                    pallette = lib.text.PALLETTE_RED # Red - Dead.
                 elif self.playerActionQueue and fighter is self.playerActionQueue[0]:
-                    color = (0xFF, 0xFF, 0x22) # Yellow - Current acting player fighter.
+                    pallette = lib.text.PALLETTE_YELLOW # Yellow - Current acting player fighter.
                 else:
-                    color = (0xFF, 0xFF, 0xFF) # White - Otherwise.
-                nameWidth, _ = lib.dialog.sizePlayerNameInPlayerList()
-                lib.text.hackRenderText(surface, (col, row + playerFighterNo) + (nameWidth, 1), fighter.name, color = color)
+                    pallette = lib.text.PALLETTE_WHITE # White - Otherwise.
+                fighter.nameText.render(surface, (col, row + playerFighterNo), pallette)
                 hp = lib.text.pad(str(fighter.fighter.hp), 4)
-                lib.text.hackRenderText(surface, (col + nameWidth + 1, row + playerFighterNo, 4, 1), hp, color = color)
+                nameWidth, _ = lib.dialog.sizePlayerNameInPlayerList()
+                lib.text.renderDigits(surface, (col + nameWidth + 1, row + playerFighterNo, 4, 1), hp, pallette = pallette)
                 fighter.bar.render(surface, (col + nameWidth + 1 + 4, row + playerFighterNo, 3, 1))
                 playerFighterNo += 1
