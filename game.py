@@ -1,33 +1,56 @@
-# Do this first to bootstrap various things.
-import lib.bootstrap
+import time
 
-import pygame
+import model.battle
 
-import lib.fighter
-import lib.game
-import lib.battle
+names = dict()
+def getNameOf(thing) -> str:
+    result = names.get(thing)
+    if result is None:
+        result = str(thing)
+    return result
+def setNameOf(thing, name: str) -> None:
+    names[thing] = name
 
-game = lib.game.Game()
+class Observer(model.battle.ModelBattleObserver):
+    def __init__(self):
+        model.battle.ModelBattleObserver.__init__(self)
 
-# The game should probably start in some generic way, but start it with a battle
-# for now since a lot of development will focus on the battle implementation.
-battle = lib.battle.Battle()
+    def onActiveAction(self, action: model.battle.ModelBattleAction) -> None:
+        text = None
+        if action is None:
+            text = 'None'
+        elif isinstance(action, model.battle.ModelBattleActionAttack):
+            text = getNameOf(action.fighter) + ' is attacking ' + getNameOf(action.target)
+        if text is None:
+            text = type(action).__name__ + ' ' + str(action)
+        print('ACTION:', text)
 
-fighterMaximu = lib.fighter.SampleFighter()
-fighterMaximu.hp = 1234
-fighterAudry = lib.fighter.SampleFighter()
-fighterAudry.spd = 0
-fighterJack = lib.fighter.SampleFighter()
-fighterJack.spd = 255
-battle.addFighter(lib.battle.FACTION_PLAYER, lib.battle.ZONE_RIGHT, 'Maximu', fighterMaximu, (1, 0, 1, 1))
-battle.addFighter(lib.battle.FACTION_PLAYER, lib.battle.ZONE_RIGHT, 'Audry', fighterAudry, (1, 1, 1, 1))
-battle.addFighter(lib.battle.FACTION_PLAYER, lib.battle.ZONE_RIGHT, 'Jack', fighterJack, (1, 2, 1, 1))
+    def onEffectApplied(self, effect: model.battle.ModelBattleEffect) -> None:
+        text = None
+        if isinstance(effect, model.battle.ModelBattleEffectAttack):
+            text = getNameOf(effect.fighter) + ' deals ' + str(effect.attack.damage) + ' damage to ' + getNameOf(effect.target)
+        if text is None:
+            text = type(effect).__name__ + ' ' + str(effect)
+        print('  ->', text)
 
-fighterBatson = lib.fighter.SampleFighter()
-battle.addFighter(lib.battle.FACTION_OTHER, lib.battle.ZONE_LEFT, 'Batson', fighterJack, (1, 3, 1, 1))
+    def onPlayerFighterReady(self, fighter: model.battle.ModelBattleFighter) -> None:
+        print('READY:', getNameOf(fighter))
 
-game.startBattle(battle)
 
-game.run()
+battle = model.battle.ModelBattle()
+battle.addObserver(Observer())
 
-pygame.quit()
+fighter = model.battle.ModelBattleFighter()
+fighter.actionGauge.limit = 100
+battle.addFighter(fighter)
+setNameOf(fighter, 'Maximu')
+
+fighter = model.battle.ModelBattleFighter()
+fighter.actionGauge.limit = 75
+fighter.faction = model.battle.FACTION_OTHER
+battle.addFighter(fighter)
+setNameOf(fighter, 'Batson')
+
+while True:
+    battle.tick()
+    time.sleep(1 / 30)
