@@ -92,6 +92,14 @@ class ModelBattleEffectAttack(ModelBattleEffect):
             if self.target.hp <= 0:
                 battle.addEffect(ModelBattleEffectFighterKO(self.target))
 
+class ModelBattleEffectFighterMove(ModelBattleEffect):
+    def __init__(self, fighter: ModelBattleFighter, coord: tuple[int, int]) -> None:
+        ModelBattleEffect.__init__(self)
+        self.fighter: ModelBattleFighter = fighter
+        self.coord: tuple[int, int] = coord
+
+    def apply(self, battle: 'ModelBattle') -> None:
+        self.fighter.zoneX, self.fighter.zoneY = self.coord
 
 ################################################################################
 ### BATTLE ACTIONS                                                           ###
@@ -130,7 +138,8 @@ class ModelBattleActionAttack(ModelBattleAction):
             self.ticksLimit = self.ticks
         # Then, in decreasing order, each tick range at which effects are performed.
         elif self.ticks >= self.ticksLimit:
-            self.fighter.actionGauge.value = 0 # XXX: Action gauge resets could be its own effect?
+            self.fighter.actionGauge.value = 0 # XXX: Action gauge resets could be its own effect? Multiple of these.
+            battle._removePlayerFighterReady(self.fighter)
         elif self.ticks > ModelBattleActionAttack.PRE_STRIKE_TICKS:
             pass
         elif self.ticks == ModelBattleActionAttack.PRE_STRIKE_TICKS:
@@ -146,6 +155,23 @@ class ModelBattleActionAttack(ModelBattleAction):
             if target is not None:
                 battle.addEffect(ModelBattleEffectAttack(self.fighter, target))
             self.ticksDue = self.ticksLimit
+
+
+class ModelBattleActionMove(ModelBattleAction):
+    TOTAL_TICKS = TICK_RATE // 3 * 2
+
+    def __init__(self, fighter: ModelBattleFighter, coord: tuple[int, int]) -> None:
+        ModelBattleAction.__init__(self, ModelBattleActionMove.TOTAL_TICKS)
+        self.fighter: ModelBattleFighter = fighter
+        self.coord: tuple[int, int] = coord
+        self.ticksDue: int = ModelBattleActionMove.TOTAL_TICKS
+
+    def tick(self, battle: 'ModelBattle') -> None:
+        if self.ticks >= self.ticksLimit:
+            # TODO: determine the hit to the action gauge.
+            battle.addEffect(ModelBattleEffectFighterMove(self.fighter, self.coord))
+            self.fighter.actionGauge.value = 0 # XXX: Action gauge resets could be its own effect? Multiple of these.
+            battle._removePlayerFighterReady(self.fighter)
 
 
 ################################################################################
@@ -289,6 +315,10 @@ class ModelBattle:
         self._playerFighterReadyQueue.append(fighter)
         for observer in self._observers:
             observer.onPlayerFighterReady(fighter)
+
+    def _removePlayerFighterReady(self, fighter: ModelBattleFighter) -> None:
+        if fighter in self._playerFighterReadyQueue:
+            self._playerFighterReadyQueue.remove(fighter)
 
     # Call this whenever you change self._actionQueue.
     def _notifyActionQueue(self) -> None:

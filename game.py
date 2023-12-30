@@ -1,4 +1,5 @@
 import time
+import random
 
 import model.battle
 
@@ -24,6 +25,8 @@ class Observer(model.battle.ModelBattleObserver):
             text = 'None'
         elif isinstance(action, model.battle.ModelBattleActionAttack):
             text = getNameOf(action.fighter) + ' is attacking ' + getNameOf(action.target)
+        elif isinstance(action, model.battle.ModelBattleActionMove):
+            text = getNameOf(action.fighter) + ' is moving to ' + str(action.coord)
         if text is None:
             text = type(action).__name__ + ' ' + str(action)
         print('ACTION:', text)
@@ -32,24 +35,32 @@ class Observer(model.battle.ModelBattleObserver):
         text = None
         if isinstance(effect, model.battle.ModelBattleEffectAttack):
             text = getNameOf(effect.fighter) + ' deals ' + str(effect.attack.damage) + ' damage to ' + getNameOf(effect.target)
+        elif isinstance(effect, model.battle.ModelBattleEffectFighterMove):
+            text = getNameOf(effect.fighter) + ' moves to ' + str(effect.coord)
         if text is None:
             text = type(effect).__name__ + ' ' + str(effect)
         print('  ->', text)
 
     def onPlayerFighterReady(self, fighter: model.battle.ModelBattleFighter) -> None:
         print('READY:', getNameOf(fighter))
+        if random.randint(0, 1) == 0:
+            battle.addAction(model.battle.ModelBattleActionAttack(fighter, batson))
+        else:
+            x = random.randint(0, model.battle.ZONE_COLS - 1)
+            y = random.randint(0, model.battle.ZONE_ROWS - 1)
+            battle.addAction(model.battle.ModelBattleActionMove(fighter, (x, y)))
 
 
 battle = model.battle.ModelBattle()
 battle.addObserver(Observer())
 
-fighter = model.battle.ModelBattleFighter()
+maximu = fighter = model.battle.ModelBattleFighter()
 fighter.actionGauge.limit = 100
 fighter.hp = fighter.hp_max = 100
 battle.addFighter(fighter)
 setNameOf(fighter, 'Maximu')
 
-fighter = model.battle.ModelBattleFighter()
+batson = fighter = model.battle.ModelBattleFighter()
 fighter.actionGauge.limit = 75
 fighter.hp = fighter.hp_max = 100
 fighter.faction = model.battle.FACTION_OTHER
