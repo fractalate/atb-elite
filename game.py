@@ -15,6 +15,9 @@ class Observer(model.battle.ModelBattleObserver):
     def __init__(self):
         model.battle.ModelBattleObserver.__init__(self)
 
+    def onTock(self) -> None:
+        print('TOCK')
+
     def onActiveAction(self, action: model.battle.ModelBattleAction) -> None:
         text = None
         if action is None:
@@ -42,11 +45,13 @@ battle.addObserver(Observer())
 
 fighter = model.battle.ModelBattleFighter()
 fighter.actionGauge.limit = 100
+fighter.hp = fighter.hp_max = 100
 battle.addFighter(fighter)
 setNameOf(fighter, 'Maximu')
 
 fighter = model.battle.ModelBattleFighter()
 fighter.actionGauge.limit = 75
+fighter.hp = fighter.hp_max = 100
 fighter.faction = model.battle.FACTION_OTHER
 battle.addFighter(fighter)
 setNameOf(fighter, 'Batson')
