@@ -1,4 +1,5 @@
 import model.battle
+import model.effect
 
 class Move(model.battle.Action):
     TOTAL_TICKS = model.battle.TICK_RATE // 3 * 2

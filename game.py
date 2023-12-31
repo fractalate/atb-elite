@@ -9,7 +9,6 @@ import engine.grid
 import engine.text
 import model.action
 import model.battle
-from model.battle import Fighter, Status
 import model.effect
 import model.status
 

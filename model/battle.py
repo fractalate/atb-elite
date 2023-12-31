@@ -1,6 +1,5 @@
 import model.calc
 import model.stats
-import model.status
 
 
 # There are at least two factions in a battle (player vs others):
@@ -187,8 +186,7 @@ class Battle:
                             status.ticks += 1
                         else:
                             fighter.statuses.remove(status)
-                            for observer in self._observers:
-                                observer.onStatusRemove(fighter, status)
+                            self._notifyStatusRemove(fighter, status)
 
                 # Each fighter's action gauge fills up a little bit on each tick.
                 if fighter.actionGauge.value < fighter.actionGauge.limit:
@@ -237,6 +235,10 @@ class Battle:
     def addAction(self, action: Action) -> None:
         self._actionQueue.append(action)
         self._notifyActionQueue()
+
+    def _notifyStatusRemove(self, fighter: Fighter, status: Status) -> None:
+        for observer in self._observers:
+            observer.onStatusRemove(fighter, status)
 
     def addEffect(self, effect: Effect) -> None:
         self._effects.append(effect)
