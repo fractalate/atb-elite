@@ -4,7 +4,7 @@ Chiefly, this is used for the positioning of text and dialogs.
 
 IMPORTANT:
 
-Always call engie.grid.init() in case resolutions are dynamic at some later stage
+Always call engine.grid.init() in case resolutions are dynamic at some later stage
 of development.
 '''
 

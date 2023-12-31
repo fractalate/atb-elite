@@ -1,4 +1,4 @@
-class ModelStatsBase:
+class StatsBase:
     def __init__(self):
         self.hp: int = 0
         self.hp_max: int = 0
@@ -15,10 +15,10 @@ class ModelStatsBase:
         self.defense: int = 0
         self.psychic: int = 0
 
-        self.damage: ModelStatsDamage = ModelStatsDamage()
-        self.resist: ModelStatsDamage = ModelStatsDamage()
+        self.damage: StatsDamage = StatsDamage()
+        self.resist: StatsDamage = StatsDamage()
 
-class ModelStatsDamage:
+class StatsDamage:
     def __init__(self):
         self.physical: int = 0
         self.elemental: int = 0

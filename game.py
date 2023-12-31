@@ -7,7 +7,11 @@ import engine
 import engine.dialog
 import engine.grid
 import engine.text
+import model.action
 import model.battle
+from model.battle import Fighter, Status
+import model.effect
+import model.status
 
 Z_SCENE   = 0
 Z_PLAYERS = 10
@@ -44,43 +48,49 @@ def showMessage(message: str):
     message = '\n'.join(textwrap.wrap(message, width = 20))
     engine.add(MessageEntity(message))
 
-class Observer(model.battle.ModelBattleObserver):
-    def __init__(self):
-        model.battle.ModelBattleObserver.__init__(self)
+class Observer(model.battle.Observer):
+    def __init__(self) -> None:
+        model.battle.Observer.__init__(self)
 
     def onTock(self) -> None:
         showMessage('TOCK')
 
-    def onActiveAction(self, action: model.battle.ModelBattleAction) -> None:
+    def onActiveAction(self, action: model.battle.Action) -> None:
         text = None
         if action is None:
             text = 'None'
-        elif isinstance(action, model.battle.ModelBattleActionAttack):
+        elif isinstance(action, model.action.Attack):
             text = getNameOf(action.fighter) + ' is attacking ' + getNameOf(action.target)
-        elif isinstance(action, model.battle.ModelBattleActionMove):
+        elif isinstance(action, model.action.Move):
             text = getNameOf(action.fighter) + ' is moving to ' + str(action.coord)
         if text is None:
             text = type(action).__name__ + ' ' + str(action)
         showMessage('ACTION: ' + text)
 
-    def onEffectApplied(self, effect: model.battle.ModelBattleEffect) -> None:
+    def onEffectApplied(self, effect: model.battle.Effect) -> None:
         text = None
-        if isinstance(effect, model.battle.ModelBattleEffectAttack):
+        if isinstance(effect, model.effect.Attack):
             text = getNameOf(effect.fighter) + ' deals ' + str(effect.attack.damage) + ' damage to ' + getNameOf(effect.target)
-        elif isinstance(effect, model.battle.ModelBattleEffectFighterMove):
+        elif isinstance(effect, model.effect.Move):
             text = getNameOf(effect.fighter) + ' moves to ' + str(effect.coord)
         if text is None:
             text = type(effect).__name__ + ' ' + str(effect)
         showMessage('  -> ' + text)
 
-    def onPlayerFighterReady(self, fighter: model.battle.ModelBattleFighter) -> None:
+    def onPlayerFighterReady(self, fighter: model.battle.Fighter) -> None:
         showMessage('READY: ' + getNameOf(fighter))
         if random.randint(0, 1) == 0:
-            battle.addAction(model.battle.ModelBattleActionAttack(fighter, batson))
+            battle.addAction(model.action.Attack(fighter, batson))
         else:
             x = random.randint(0, model.battle.ZONE_COLS - 1)
             y = random.randint(0, model.battle.ZONE_ROWS - 1)
-            battle.addAction(model.battle.ModelBattleActionMove(fighter, (x, y)))
+            battle.addAction(model.action.Move(fighter, (x, y)))
+
+    def onStatusAdd(self, fighter: model.battle.Fighter, status: model.battle.Status) -> None:
+        pass
+
+    def onStatusRemove(self, fighter: model.battle.Fighter, status: model.battle.Status) -> None:
+        pass
 
 class BattleEntity(engine.Entity):
     def __init__(self):
@@ -89,16 +99,16 @@ class BattleEntity(engine.Entity):
     def tick(self) -> None:
         battle.tick()
 
-battle = model.battle.ModelBattle()
+battle = model.battle.Battle()
 battle.addObserver(Observer())
 
-maximu = fighter = model.battle.ModelBattleFighter()
+maximu = fighter = model.battle.Fighter()
 fighter.actionGauge.limit = 100
 fighter.hp = fighter.hp_max = 100
 battle.addFighter(fighter)
 setNameOf(fighter, 'Maximu')
 
-batson = fighter = model.battle.ModelBattleFighter()
+batson = fighter = model.battle.Fighter()
 fighter.actionGauge.limit = 75
 fighter.hp = fighter.hp_max = 100
 fighter.faction = model.battle.FACTION_OTHER
@@ -107,3 +117,10 @@ setNameOf(fighter, 'Batson')
 
 engine.add(BattleEntity())
 engine.run()
+
+"""
+                        # XXX: Doing a basic attack. This should probably live elsewhere. There are other places I look for fighters like this.
+                        players = [f for f in self._fighters if f.faction != fighter.faction]
+                        if players:
+                            self.addAction(model.action.Attack(fighter, players[0]))
+"""

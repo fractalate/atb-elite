@@ -1,16 +1,13 @@
 import model.calc
 import model.stats
+import model.status
 
-
-################################################################################
-### CONSTANTS                                                                ###
-################################################################################
 
 # There are at least two factions in a battle (player vs others):
 FACTION_PLAYER = 0 # Almost always compare against this constant.
 FACTION_OTHER = 1 # Any non-zero value is another, distinct faction.
 
-# There are three zones on the battlefield:
+# There are three zones on the battle field:
 ZONE_LEFT = 0
 ZONE_MID = 1
 ZONE_RIGHT = 2
@@ -19,30 +16,56 @@ ZONE_RIGHT = 2
 ZONE_ROWS = 4
 ZONE_COLS = 3
 
-# Cells on the battlefield can be in various states:
-CELL_NORMAL = 0
-CELL_IMPASSIBLE = 1
-
 # The battle model requires 30 ticks per second.
 TICK_RATE = 30
 
-# Some actions can pause ticks delivered to fighters. See ModeBattleAction.
-ACT_MODE_ACTIVE = 0
-ACT_MODE_PAUSE = 1
+# Only one action occurs at a time during battle. An action is something like
+# one of your characters swinging their weapon for an attack.
+class Action:
+    # Fighter action gauges charge during this action.
+    MODE_ACTIVE = 0
+    # Fighter action gauges do not charge during this action.
+    MODE_PAUSE = 1
 
+    def __init__(self, ticksLimit: int, mode: int = MODE_ACTIVE) -> None:
+        self.mode: int = mode
+        self.ticks: int = 1
+        self.ticksLimit: int = ticksLimit
+        self.ticksDue: int = 1
+        if ticksLimit < 1:
+            raise AssertionError('ticksLimit is ' + str(ticksLimit) + ' but must be positive.')
 
-################################################################################
-### BATTLE ENTITIES                                                          ###
-################################################################################
+    def tick(self, battle: 'Battle') -> None:
+        pass
 
-class ModelBattleFighterActionGauge:
+class Status:
+    def __init__(self, ticksLimit: int) -> None:
+        # Value is not a Fighter until the status is added to the battle.
+        self.fighter: 'Fighter' = None
+        self.ticks: int = 1
+        self.ticksLimit: int = ticksLimit
+        self.ticksDue: int = 1
+        if ticksLimit < 1:
+            raise AssertionError('ticksLimit is ' + str(ticksLimit) + ' but must be positive.')
+
+    def tick(self, battle: 'Battle') -> None:
+        pass
+
+class Script:
+    def __init__(self) -> None:
+        pass
+
+    def tick(self, battle: 'Battle') -> None:
+        pass
+
+class ActionGauge:
     def __init__(self) -> None:
         self.value: int = 0
         self.limit: int = 0
 
-class ModelBattleFighter(model.stats.ModelStatsBase):
+class Fighter(model.stats.StatsBase):
     def __init__(self) -> None:
-        model.stats.ModelStatsBase.__init__(self)
+        model.stats.StatsBase.__init__(self)
 
         self.faction: int = FACTION_PLAYER
 
@@ -51,154 +74,31 @@ class ModelBattleFighter(model.stats.ModelStatsBase):
         self.zoneY: int = 0
 
         # For script controlled fighters (enemies).
-        self.script: None | ModelBattleScript = None
+        self.script: None | Script = None
 
-        self.actionGauge: ModelBattleFighterActionGauge = ModelBattleFighterActionGauge()
-        self.action: None | ModelBattleAction = None
+        self.statuses: list[Status] = []
+        self.actionGauge: ActionGauge = ActionGauge()
+        self.action: None | Action = None
 
-
-################################################################################
-### BATTLE EFFECTS                                                           ###
-################################################################################
-
-class ModelBattleEffect:
+class Effect:
     def __init__(self) -> None:
         pass
 
-    def apply(self, battle: 'ModelBattle') -> None:
+    def apply(self, battle: 'Battle') -> None:
         pass
 
-class ModelBattleEffectFighterKO(ModelBattleEffect):
-    def __init__(self, fighter: ModelBattleFighter) -> None:
-        ModelBattleEffect.__init__(self)
-        self.fighter: ModelBattleFighter = fighter
+class Cell:
+    NORMAL = 0
+    IMPASSIBLE = 1
 
-class ModelBattleEffectAttack(ModelBattleEffect):
-    def __init__(self, fighter: ModelBattleFighter, target: ModelBattleFighter) -> None:
-        ModelBattleEffect.__init__(self)
-        self.fighter: ModelBattleFighter = fighter
-        self.target: ModelBattleFighter = target
-        self.attack: model.calc.CalcAttack = model.calc.CalcAttack(fighter, target)
-
-    def apply(self, battle: 'ModelBattle') -> None:
-        if self.attack.damage > 0:
-            # XXX: I likely will need to abstract this logic.
-            if self.target.hp <= self.attack.damage:
-                self.target.hp = 0
-            else:
-                self.target.hp -= self.attack.damage
-                if self.target.hp > self.target.hp_max:
-                    self.target.hp = self.target.hp_max
-            if self.target.hp <= 0:
-                battle.addEffect(ModelBattleEffectFighterKO(self.target))
-
-class ModelBattleEffectFighterMove(ModelBattleEffect):
-    def __init__(self, fighter: ModelBattleFighter, coord: tuple[int, int]) -> None:
-        ModelBattleEffect.__init__(self)
-        self.fighter: ModelBattleFighter = fighter
-        self.coord: tuple[int, int] = coord
-
-    def apply(self, battle: 'ModelBattle') -> None:
-        self.fighter.zoneX, self.fighter.zoneY = self.coord
-
-################################################################################
-### BATTLE ACTIONS                                                           ###
-################################################################################
-
-def isKO(fighter: ModelBattleFighter) -> bool:
-    return fighter.hp <= 0
-
-class ModelBattleAction:
-    def __init__(self, ticksLimit: int, mode: int = ACT_MODE_ACTIVE) -> None:
-        self.mode: int = mode
-        self.ticks: int = 1
-        self.ticksLimit: int = ticksLimit
-        self.ticksDue: int = 1
-        if ticksLimit < 1:
-            raise AssertionError('ticksLimit is ' + str(ticksLimit) + ' but must be positive.')
-
-    def tick(self, battle: 'ModelBattle') -> None:
-        pass
-
-class ModelBattleActionAttack(ModelBattleAction):
-    PRE_STRIKE_TICKS = TICK_RATE // 2
-    POST_STRIKE_TICKS = TICK_RATE // 4
-    TOTAL_TICKS = PRE_STRIKE_TICKS + POST_STRIKE_TICKS
-
-    def __init__(self, fighter: ModelBattleFighter, target: ModelBattleFighter) -> None:
-        ModelBattleAction.__init__(self, ModelBattleActionAttack.TOTAL_TICKS)
-        self.fighter: ModelBattleFighter = fighter
-        self.target: ModelBattleFighter = target
-        self.ticksDue: int = ModelBattleActionAttack.PRE_STRIKE_TICKS
-
-    def tick(self, battle: 'ModelBattle') -> None:
-        # Early bail out checks come first. If they are expensive, make sure to
-        # leverage self.ticksDue to skip calling tick() when it is not needed.
-        if isKO(self.fighter):
-            self.ticksLimit = self.ticks
-        # Then, in decreasing order, each tick range at which effects are performed.
-        elif self.ticks >= self.ticksLimit:
-            self.fighter.actionGauge.value = 0 # XXX: Action gauge resets could be its own effect? Multiple of these.
-            battle._removePlayerFighterReady(self.fighter)
-        elif self.ticks > ModelBattleActionAttack.PRE_STRIKE_TICKS:
-            pass
-        elif self.ticks == ModelBattleActionAttack.PRE_STRIKE_TICKS:
-            target = self.target
-            if isKO(self.target):
-                # XXX: Don't use the private data battle._fighters!!!
-                targets = [f for f in battle._fighters if f.faction == self.target.faction]
-                if targets:
-                    target = targets[0]
-                    self.target = targets[0]
-                else:
-                    target = None
-            if target is not None:
-                battle.addEffect(ModelBattleEffectAttack(self.fighter, target))
-            self.ticksDue = self.ticksLimit
-
-
-class ModelBattleActionMove(ModelBattleAction):
-    TOTAL_TICKS = TICK_RATE // 3 * 2
-
-    def __init__(self, fighter: ModelBattleFighter, coord: tuple[int, int]) -> None:
-        ModelBattleAction.__init__(self, ModelBattleActionMove.TOTAL_TICKS)
-        self.fighter: ModelBattleFighter = fighter
-        self.coord: tuple[int, int] = coord
-        self.ticksDue: int = ModelBattleActionMove.TOTAL_TICKS
-
-    def tick(self, battle: 'ModelBattle') -> None:
-        if self.ticks >= self.ticksLimit:
-            # TODO: determine the hit to the action gauge.
-            battle.addEffect(ModelBattleEffectFighterMove(self.fighter, self.coord))
-            self.fighter.actionGauge.value = 0 # XXX: Action gauge resets could be its own effect? Multiple of these.
-            battle._removePlayerFighterReady(self.fighter)
-
-
-################################################################################
-### BATTLE SCRIPTING                                                         ###
-################################################################################
-
-class ModelBattleScript:
     def __init__(self) -> None:
-        pass
+        self.state: int = Cell.NORMAL
 
-    def tick(self, battle: 'ModelBattle') -> None:
-        pass
-
-
-################################################################################
-### BATTLE FIELD                                                             ###
-################################################################################
-
-class ModelBattleFieldCell:
+class Field:
     def __init__(self) -> None:
-        self.state: int = CELL_NORMAL
-
-class ModelBattleField:
-    def __init__(self) -> None:
-        self._cells: list[list[list[ModelBattleFieldCell]]] = [
+        self._cells: list[list[list[Cell]]] = [
             [
-                [[ModelBattleFieldCell()
+                [[Cell()
                     for _ in range(ZONE_ROWS)]]
                         for _ in range(ZONE_COLS)
             ] for _ in [
@@ -208,50 +108,46 @@ class ModelBattleField:
             ]
         ]
 
-    def getCell(self, zone: int, col: int, row: int) -> ModelBattleFieldCell:
+    def getCell(self, zone: int, col: int, row: int) -> Cell:
         return self._cells[zone][col][row]
 
-
-################################################################################
-### BATTLE OBSERVER                                                          ###
-################################################################################
-
-class ModelBattleObserver:
+class Observer:
     def __init__(self):
         pass
 
     def onTock(self) -> None:
         pass
 
-    def onActiveAction(self, action: ModelBattleAction) -> None:
+    def onActiveAction(self, action: Action) -> None:
         pass
 
-    def onPlayerFighterReady(self, fighter: ModelBattleFighter) -> None:
+    def onPlayerFighterReady(self, fighter: Fighter) -> None:
         pass
 
-    def onEffectApplied(self, effect: ModelBattleEffect) -> None:
+    def onEffectApplied(self, effect: Effect) -> None:
         pass
 
+    def onStatusAdd(self, fighter: Fighter, status: Status) -> None:
+        pass
 
-################################################################################
-### BATTLE                                                                   ###
-################################################################################
+    def onStatusRemove(self, fighter: Fighter, status: Status) -> None:
+        pass
 
-class ModelBattle:
+class Battle:
     def __init__(self) -> None:
         self._ticks: int = 0
-        self._fighters: list[ModelBattleFighter] = []
-        self._field: ModelBattleField = ModelBattleField()
-        self._playerFighterReadyQueue: list[ModelBattleField] = []
-        self._actionQueue: list[ModelBattleAction] = []
-        self._effects: list[ModelBattleEffect] = []
-        self._observers: list[ModelBattleObserver] = []
-        self._lastAction: None | ModelBattleAction = None
+        self._fighters: list[Fighter] = []
+        self._field: Field = Field()
+        self._playerFighterReadyQueue: list[Field] = []
+        self._actionQueue: list[Action] = []
+        self._effects: list[Effect] = []
+        self._observers: list[Observer] = []
+        self._lastAction: None | Action = None
 
-    def addObserver(self, observer: ModelBattleObserver) -> None:
+    def addObserver(self, observer: Observer) -> None:
         self._observers.append(observer)
 
-    def addFighter(self, fighter: ModelBattleFighter) -> None:
+    def addFighter(self, fighter: Fighter) -> None:
         self._fighters.append(fighter)
 
     def tick(self) -> None:
@@ -261,7 +157,7 @@ class ModelBattle:
         # least 1 tick to complete, so only one action can happen during a tick.
         if self._actionQueue:
             currentAction = self._actionQueue[0]
-            pauseGauges = currentAction.mode == ACT_MODE_PAUSE
+            pauseGauges = currentAction.mode == Action.MODE_PAUSE
             if currentAction.ticks >= currentAction.ticksLimit or currentAction.ticks >= currentAction.ticksDue:
                 currentAction.tick(self) # Called each tick if ticksDue is not set in the action.
             if currentAction.ticks < currentAction.ticksLimit:
@@ -283,7 +179,16 @@ class ModelBattle:
                 if isKO(fighter):
                     continue
 
-                # TODO: Tick the fighter. Possibly things like poison damage need to be applied.
+                if fighter.statuses:
+                    for status in list(fighter.statuses):
+                        if status.ticks >= status.ticksLimit or status.ticks >= status.ticksDue:
+                            status.tick(self)
+                        if status.ticks < status.ticksLimit:
+                            status.ticks += 1
+                        else:
+                            fighter.statuses.remove(status)
+                            for observer in self._observers:
+                                observer.onStatusRemove(fighter, status)
 
                 # Each fighter's action gauge fills up a little bit on each tick.
                 if fighter.actionGauge.value < fighter.actionGauge.limit:
@@ -297,13 +202,8 @@ class ModelBattle:
                 # When an enemy's gauge is filled, its script can decide which
                 # actions to perform.
                 else: 
-                    if isinstance(fighter.script, ModelBattleScript):
+                    if isinstance(fighter.script, Script):
                         fighter.script.tick(self)
-                    else:
-                        # XXX: Doing a basic attack. This should probably live elsewhere. There are other places I look for fighters like this.
-                        players = [f for f in self._fighters if f.faction != fighter.faction]
-                        if players:
-                            self.addAction(ModelBattleActionAttack(fighter, players[0]))
 
         # All effects, and those created as a result of other effects, are
         # applied this tick.
@@ -311,12 +211,12 @@ class ModelBattle:
             effect, self._effects = self._effects[0], self._effects[1:]
             self._applyEffect(effect)
 
-    def _addPlayerFighterReady(self, fighter: ModelBattleFighter) -> None:
+    def _addPlayerFighterReady(self, fighter: Fighter) -> None:
         self._playerFighterReadyQueue.append(fighter)
         for observer in self._observers:
             observer.onPlayerFighterReady(fighter)
 
-    def _removePlayerFighterReady(self, fighter: ModelBattleFighter) -> None:
+    def _removePlayerFighterReady(self, fighter: Fighter) -> None:
         if fighter in self._playerFighterReadyQueue:
             self._playerFighterReadyQueue.remove(fighter)
 
@@ -334,14 +234,24 @@ class ModelBattle:
             for observer in self._observers:
                 observer.onActiveAction(self._lastAction)
 
-    def addAction(self, action: ModelBattleAction) -> None:
+    def addAction(self, action: Action) -> None:
         self._actionQueue.append(action)
         self._notifyActionQueue()
 
-    def addEffect(self, effect: ModelBattleEffect) -> None:
+    def addEffect(self, effect: Effect) -> None:
         self._effects.append(effect)
 
-    def _applyEffect(self, effect: ModelBattleEffect) -> None:
+    def addStatus(self, fighter: Fighter, status: Status) -> None:
+        if status not in fighter.statuses:
+            fighter.statuses.append(status)
+            for observer in self._observers:
+                observer.onStatusAdd(fighter, status)
+
+    def _applyEffect(self, effect: Effect) -> None:
         effect.apply(self)
         for observer in self._observers:
             observer.onEffectApplied(effect)
+
+
+def isKO(fighter: Fighter) -> bool:
+    return fighter.hp <= 0
