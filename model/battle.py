@@ -1,22 +1,20 @@
-import model.calc
-import model.stats
-
+import model
 
 # There are at least two factions in a battle (player vs others):
-FACTION_PLAYER = 0 # Almost always compare against this constant.
-FACTION_OTHER = 1 # Any non-zero value is another, distinct faction.
+FACTION_PLAYER: int = 0 # Almost always compare against this constant.
+FACTION_OTHER: int = 1 # Any non-zero value is another, distinct faction.
 
 # There are three zones on the battle field:
-ZONE_LEFT = 0
-ZONE_MID = 1
-ZONE_RIGHT = 2
+ZONE_LEFT: int = 0
+ZONE_MID: int = 1
+ZONE_RIGHT: int = 2
 
 # Each zone is split into a certain number cells as rows and columns:
-ZONE_ROWS = 4
-ZONE_COLS = 3
+ZONE_ROWS: int = 4
+ZONE_COLS: int = 3
 
 # The battle model requires 30 ticks per second.
-TICK_RATE = 30
+TICK_RATE: int = 30 # XXX: Hard coded to match engine.TICK_RATE
 
 # Only one action occurs at a time during battle. An action is something like
 # one of your characters swinging their weapon for an attack.
@@ -62,9 +60,9 @@ class ActionGauge:
         self.value: int = 0
         self.limit: int = 0
 
-class Fighter(model.stats.StatsBase):
+class Fighter(model.StatsBase):
     def __init__(self) -> None:
-        model.stats.StatsBase.__init__(self)
+        model.StatsBase.__init__(self)
 
         self.faction: int = FACTION_PLAYER
 
@@ -144,7 +142,12 @@ class Battle:
         self._lastAction: None | Action = None
 
     def addObserver(self, observer: Observer) -> None:
-        self._observers.append(observer)
+        if observer not in self._observers:
+            self._observers.append(observer)
+
+    def removeObserver(self, observer: Observer) -> None:
+        if observer in self._observers:
+            self._observers.remove(observer)
 
     def addFighter(self, fighter: Fighter) -> None:
         self._fighters.append(fighter)
@@ -253,7 +256,6 @@ class Battle:
         effect.apply(self)
         for observer in self._observers:
             observer.onEffectApplied(effect)
-
 
 def isKO(fighter: Fighter) -> bool:
     return fighter.hp <= 0

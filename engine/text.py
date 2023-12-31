@@ -51,10 +51,10 @@ class BasicText():
 
     def render(self, surface: pygame.Surface, gcoord: tuple[int, int]):
         width, height = self.gsize
-        x, y = engine.grid.toScreen(gcoord)
+        x, y = engine.gridCoordToScreen(gcoord)
         for chy in range(height):
             for chx in range(width):
-                dx, dy = engine.grid.toScreen((chx, chy))
+                dx, dy = engine.grid.gridCoordToScreen((chx, chy))
                 tile = self.tiles[chy][chx]
                 if tile is not None:
                     surface.blit(tile, (x + dx + FONT_ALIGN_HORIZONTAL, y + dy + FONT_ALIGN_VERTICAL))

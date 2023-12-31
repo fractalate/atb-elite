@@ -2,34 +2,34 @@ from typing import Generator
 
 import pygame
 
-import engine.sys
+import engine
 
-class What(int): pass
+class InputEvent(int): pass
 
-UP: What = 0
-DOWN: What = 1
-LEFT: What = 2
-RIGHT: What = 3
+UP: InputEvent = 0
+DOWN: InputEvent = 1
+LEFT: InputEvent = 2
+RIGHT: InputEvent = 3
 
-CONFIRM: What = 4 # ><
-CANCEL: What = 5  # ()
-MENU: What = 6    # /\
-ACTION: What = 7  # []
+CONFIRM: InputEvent = 4 # ><
+CANCEL: InputEvent = 5  # ()
+MENU: InputEvent = 6    # /\
+ACTION: InputEvent = 7  # []
 
-START: What = 8
-SELECT: What = 9
+START: InputEvent = 8
+SELECT: InputEvent = 9
 
-DEBUG1: What = 33
-DEBUG2: What = 34
-DEBUG3: What = 35
-DEBUG4: What = 36
-DEBUG5: What = 37
-DEBUG6: What = 38
+DEBUG1: InputEvent = 33
+DEBUG2: InputEvent = 34
+DEBUG3: InputEvent = 35
+DEBUG4: InputEvent = 36
+DEBUG5: InputEvent = 37
+DEBUG6: InputEvent = 38
 
 # Desired to feel like you've held the button for emphasis with the intention of repeating.
-TICKS_HOLD = engine.sys.FRAME_RATE // 2
+TICKS_HOLD = engine.FRAME_RATE // 2
 # Desired to be quite rapid feeling.
-TICKS_HOLD_REPEAT = engine.sys.FRAME_RATE // 16
+TICKS_HOLD_REPEAT = engine.FRAME_RATE // 16
 
 class InputState():
     def __init__(self) -> None:
@@ -88,7 +88,7 @@ class Input():
         self.debug5: InputState = InputState()
         self.debug6: InputState = InputState()
 
-    def tick(self) -> Generator[What, None, None]:
+    def tick(self) -> Generator[InputEvent, None, None]:
         pressed = pygame.key.get_pressed()
 
         if self.key_up.tick(pressed[pygame.K_UP]):

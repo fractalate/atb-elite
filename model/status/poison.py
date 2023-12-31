@@ -1,5 +1,5 @@
-import model.battle
+import model
 
-class Poison(model.battle.Status):
+class StatusPoison(model.Status):
     def __init__(self) -> None:
-        model.battle.Status.__init__(self, ticksLimit = round(model.battle.TICK_RATE * 10))
+        model.Status.__init__(self, ticksLimit = round(model.TICK_RATE * 10))
