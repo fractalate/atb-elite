@@ -6,15 +6,24 @@ import engine.grid
 
 GAME_FONT = pygame.font.SysFont('Courier New', 40, True) # XXX: Bundle a basic font, perhaps.
 FONT_ALIGN_HORIZONTAL = 4
-FONT_ALIGN_VERTICAL = -3
+FONT_ALIGN_VERTICAL = -5 # XXX: -3 looked good, but low chars like y hang over the dialog border
+
+class Pallette(int): pass
 
 # These must be 0, 1, and 2 respectively!
-PALLETTE_WHITE = 0
-PALLETTE_RED = 1
-PALLETTE_YELLOW = 2
+PALLETTE_WHITE: Pallette = 0
+PALLETTE_RED: Pallette = 1
+PALLETTE_YELLOW: Pallette = 2
 
-def streamPositionedCharacters(text: str):
-    # XXX: This could have a pre-processed text wrapping integrated with it? Or just having one available would be helpful?
+_PALLETTES = [PALLETTE_WHITE, PALLETTE_RED, PALLETTE_YELLOW]
+
+_WHITE = pygame.Color(0xFF, 0xFF, 0xFF)
+_RED = pygame.Color(0xFF, 0x11, 0x11)
+_YELLOW = pygame.Color(0xFF, 0xFF, 0x22)
+
+_COLORS = [_WHITE, _RED, _YELLOW]
+
+def _streamPositionedCharacters(text: str):
     x, y = 0, 0
     for c in text:
         if c == '\n':
@@ -25,20 +34,20 @@ def streamPositionedCharacters(text: str):
             x += 1
 
 @cache
-def renderCharacter(ch: str, color: pygame.Color = (0xFF, 0xFF, 0xFF)):
+def _renderCharacter(ch: str, pallette: Pallette):
     antialias = 1
-    return GAME_FONT.render(ch, antialias, color)
+    return GAME_FONT.render(ch, antialias, _COLORS[pallette])
 
 class BasicText():
-    def __init__(self, gsize: tuple[int, int], text: str, color: pygame.Color = (0xFF, 0xFF, 0xFF)):
+    def __init__(self, gsize: tuple[int, int], text: str, pallette: Pallette = PALLETTE_WHITE):
         width, height = gsize
-        self.gsize = gsize
+        self.gsize: tuple[int, int] = gsize
         # self.tiles[y][x]
-        self.tiles = [[None] * width for _ in range(height)]
+        self.tiles: list[list[None | pygame.Surface]] = [[None] * width for _ in range(height)]
         # "ch" for "character".
-        for (chx, chy, ch) in streamPositionedCharacters(text):
+        for (chx, chy, ch) in _streamPositionedCharacters(text):
             if chx < width and chy < height:
-                self.tiles[chy][chx] = renderCharacter(ch, color = color)
+                self.tiles[chy][chx] = _renderCharacter(ch, pallette)
 
     def render(self, surface: pygame.Surface, gcoord: tuple[int, int]):
         width, height = self.gsize
@@ -49,31 +58,10 @@ class BasicText():
                 tile = self.tiles[chy][chx]
                 if tile is not None:
                     surface.blit(tile, (x + dx + FONT_ALIGN_HORIZONTAL, y + dy + FONT_ALIGN_VERTICAL))
-RenderText = BasicText # TODO: Do a project-wide rename to BasicText.
 
 class PalletteText():
     def __init__(self, gsize: tuple[int, int], text: str):
-        self.texts: list[BasicText] = [
-            BasicText(gsize, text, color = (0xFF, 0xFF, 0xFF)), # PALLETTE_WHITE
-            BasicText(gsize, text, color = (0xFF, 0x11, 0x11)), # PALLETTE_RED
-            BasicText(gsize, text, color = (0xFF, 0xFF, 0x22)), # PALLETTE_YELLOW
-        ]
+        self.texts: list[BasicText] = [BasicText(gsize, text, pallette) for pallette in _PALLETTES]
 
     def render(self, surface: pygame.Surface, gcoord: tuple[int, int], pallette = PALLETTE_WHITE):
         self.texts[pallette].render(surface, gcoord)
-
-def pad(text: str, length: int):
-    if len(text) < length:
-        return ' ' * (length - len(text)) + text
-    return text
-
-DIGITS = [PalletteText((1, 1), str(i)) for i in range(10)]
-
-def renderDigits(surface: pygame.Surface, grect: tuple[int, int, int, int], text: str, pallette = PALLETTE_WHITE):
-    x, y, width, _ = grect
-    for i in range(width):
-        if i < len(text):
-            o = ord(text[i]) - ord('0')
-            if o >= 0 and o <= 9:
-                DIGITS[o].render(surface, (x, y), pallette = pallette)
-        x += 1

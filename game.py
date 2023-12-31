@@ -1,6 +1,7 @@
 import pygame
 
 import random
+import textwrap
 
 import engine
 import engine.dialog
@@ -32,20 +33,15 @@ class MessageEntity(engine.Entity):
         width = 20
         height = 3
         self.gcoord = (x, y)
-        self.dialog = engine.dialog.Dialog((x, y, width, height))
-        self.text = engine.text.RenderText((width, height), message)
+        self.dialog = engine.dialog.Dialog(pygame.Rect(x, y, width, height))
+        self.text = engine.text.BasicText((width, height), message)
 
     def render(self, surface: pygame.Surface) -> None:
         self.dialog.render(surface)
         self.text.render(surface, self.gcoord)
 
 def showMessage(message: str):
-    if len(message) > 40:
-        message = message[:20] + '\n' + message[20:40] + '\n' + message[40:]
-    elif len(message) > 20:
-        message = '\n' + message[:20] + '\n' + message[20:]
-    else:
-        message = '\n' + message
+    message = '\n'.join(textwrap.wrap(message, width = 20))
     engine.add(MessageEntity(message))
 
 class Observer(model.battle.ModelBattleObserver):

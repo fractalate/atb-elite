@@ -24,8 +24,14 @@ def init(surface: pygame.Surface):
     GRID_STEP_X = width // GRID_COLS
     GRID_STEP_Y = height // GRID_ROWS
 
-def toScreen(coordinate: tuple[int, int]):
+def toScreen(coordinate: tuple[int, int]) -> tuple[int, int]:
     return (coordinate[0] * GRID_STEP_X, coordinate[1] * GRID_STEP_Y)
+
+def rectToScreen(grect: pygame.Rect) -> pygame.Rect:
+    return pygame.Rect(
+        grect.x * GRID_STEP_X, grect.y * GRID_STEP_Y,
+        grect.w * GRID_STEP_X, grect.h * GRID_STEP_Y,
+    )
 
 # Useful for debugging.
 def draw(surface: pygame.Surface):
