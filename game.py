@@ -1,7 +1,18 @@
-import time
+import pygame
+
 import random
 
+import engine
+import engine.dialog
+import engine.grid
+import engine.text
 import model.battle
+
+Z_SCENE   = 0
+Z_PLAYERS = 10
+Z_ACTION  = 20
+Z_DIALOG  = 30
+Z_DEBUG   = 100
 
 names = dict()
 def getNameOf(thing) -> str:
@@ -12,12 +23,37 @@ def getNameOf(thing) -> str:
 def setNameOf(thing, name: str) -> None:
     names[thing] = name
 
+import random
+class MessageEntity(engine.Entity):
+    def __init__(self, message: str) -> None:
+        engine.Entity.__init__(self, mode = engine.Entity.MODE_RENDER, frames = 20)
+        x = random.randint(0, engine.grid.GRID_COLS - 1 - 20)
+        y = random.randint(0, engine.grid.GRID_ROWS - 1 - 3)
+        width = 20
+        height = 3
+        self.gcoord = (x, y)
+        self.dialog = engine.dialog.Dialog((x, y, width, height))
+        self.text = engine.text.RenderText((width, height), message)
+
+    def render(self, surface: pygame.Surface) -> None:
+        self.dialog.render(surface)
+        self.text.render(surface, self.gcoord)
+
+def showMessage(message: str):
+    if len(message) > 40:
+        message = message[:20] + '\n' + message[20:40] + '\n' + message[40:]
+    elif len(message) > 20:
+        message = '\n' + message[:20] + '\n' + message[20:]
+    else:
+        message = '\n' + message
+    engine.add(MessageEntity(message))
+
 class Observer(model.battle.ModelBattleObserver):
     def __init__(self):
         model.battle.ModelBattleObserver.__init__(self)
 
     def onTock(self) -> None:
-        print('TOCK')
+        showMessage('TOCK')
 
     def onActiveAction(self, action: model.battle.ModelBattleAction) -> None:
         text = None
@@ -29,7 +65,7 @@ class Observer(model.battle.ModelBattleObserver):
             text = getNameOf(action.fighter) + ' is moving to ' + str(action.coord)
         if text is None:
             text = type(action).__name__ + ' ' + str(action)
-        print('ACTION:', text)
+        showMessage('ACTION: ' + text)
 
     def onEffectApplied(self, effect: model.battle.ModelBattleEffect) -> None:
         text = None
@@ -39,10 +75,10 @@ class Observer(model.battle.ModelBattleObserver):
             text = getNameOf(effect.fighter) + ' moves to ' + str(effect.coord)
         if text is None:
             text = type(effect).__name__ + ' ' + str(effect)
-        print('  ->', text)
+        showMessage('  -> ' + text)
 
     def onPlayerFighterReady(self, fighter: model.battle.ModelBattleFighter) -> None:
-        print('READY:', getNameOf(fighter))
+        showMessage('READY: ' + getNameOf(fighter))
         if random.randint(0, 1) == 0:
             battle.addAction(model.battle.ModelBattleActionAttack(fighter, batson))
         else:
@@ -50,6 +86,12 @@ class Observer(model.battle.ModelBattleObserver):
             y = random.randint(0, model.battle.ZONE_ROWS - 1)
             battle.addAction(model.battle.ModelBattleActionMove(fighter, (x, y)))
 
+class BattleEntity(engine.Entity):
+    def __init__(self):
+        engine.Entity.__init__(self, mode = engine.Entity.MODE_TICK)
+
+    def tick(self) -> None:
+        battle.tick()
 
 battle = model.battle.ModelBattle()
 battle.addObserver(Observer())
@@ -67,6 +109,5 @@ fighter.faction = model.battle.FACTION_OTHER
 battle.addFighter(fighter)
 setNameOf(fighter, 'Batson')
 
-while True:
-    battle.tick()
-    time.sleep(1 / 30)
+engine.add(BattleEntity())
+engine.run()

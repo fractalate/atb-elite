@@ -28,7 +28,7 @@ TICK_RATE = 30
 
 # Some actions can pause ticks delivered to fighters. See ModeBattleAction.
 ACT_MODE_ACTIVE = 0
-ACT_MODE_PAUSE = 0
+ACT_MODE_PAUSE = 1
 
 
 ################################################################################
