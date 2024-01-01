@@ -44,7 +44,8 @@ class Battle(engine.Entity, model.Observer):
         self.battle.removeObserver(self)
 
     def onTock(self) -> None:
-        showMessage('TOCK')
+        #showMessage('TOCK')
+        pass
 
     def onActiveAction(self, action: model.Action) -> None:
         text = None

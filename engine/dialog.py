@@ -1,5 +1,7 @@
 import pygame
 
+import textwrap
+
 import engine
 
 
@@ -43,5 +45,5 @@ class Dialog(engine.Entity):
 # XXX: Probably a temporary thing.
 class DialogQuick(Dialog):
     def __init__(self, grect: pygame.Rect, text: str) -> None:
-        Dialog.__init__(self, grect, text)
+        Dialog.__init__(self, grect, '\n'.join(textwrap.wrap(text, 20)))
         self.frames = 100
