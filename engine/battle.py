@@ -7,6 +7,7 @@ import engine
 import model
 
 # XXX: Temp stuff.
+lines = 0
 names = dict()
 def getNameOf(thing) -> str:
     result = names.get(thing)
@@ -16,10 +17,14 @@ def getNameOf(thing) -> str:
 def setNameOf(thing, name: str) -> None:
     names[thing] = name
 def showMessage(message: str):
+    global lines
     width = 20
     height = 3
-    x = random.randint(0, engine.GRID_COLS - 1 - width)
-    y = random.randint(0, engine.GRID_ROWS - 1 - height)
+    x = 0
+    y = lines
+    lines += height
+    if lines >= engine.GRID_ROWS - height:
+        lines = 0
     engine.add(engine.DialogQuick(pygame.Rect(x, y, width, height), message))
 
 class Battle(engine.Entity, model.Observer):
