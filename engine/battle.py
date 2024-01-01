@@ -14,9 +14,8 @@ def showMessage(message: str):
     y = 0
     engine.add(engine.DialogQuick(pygame.Rect(x, y, width, height), message))
 
-class FighterEntity(engine.Entity):
+class FighterEntity:
     def __init__(self, fighter: model.Fighter) -> None:
-        engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
         self.fighter: model.Fighter = fighter
 
     def render(self, surface: pygame.Surface) -> None:
@@ -26,17 +25,15 @@ class FighterEntity(engine.Entity):
             color = (0x88, 0x22, 0x11)
         engine.Backdrop.drawCellsBorder(surface, self.fighter.zone, (self.fighter.zoneX, self.fighter.zoneY, 1, 1), color)
 
-class EnemyList(engine.Entity):
+class EnemyList:
     def __init__(self, battle: model.Battle) -> None:
-        engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
         self.battle: model.Battle = battle
         self.dialog: engine.Dialog = engine.Dialog(pygame.Rect(0, 20, 18, 4)) # TODO: Move constants to a common place.
-        engine.add(self.dialog)
         self.updateText()
 
-    def cleanup(self) -> None:
-        engine.remove(self.dialog)
-
+    def render(self, surface: pygame.Surface):
+        self.dialog.render(surface)
+        
     def updateText(self) -> None:
         names = [e.name for e in self.battle.getEnemies() if not model.isKO(e)]
         self.dialog.setText('\n'.join(names))
@@ -79,57 +76,45 @@ class ProgressBar:
             fillWidth = fillPercent * width
             pygame.draw.rect(surface, (0x11, 0xAB, 0x33), (x, y, fillWidth, height)) # TODO: Constant color.
 
-class PlayerList(engine.Entity):
+class PlayerList:
     def __init__(self, battle: model.Battle) -> None:
-        engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
         self.battle: model.Battle = battle
         self.dialog = engine.Dialog(pygame.Rect(18, 20, 20, 4)) # TODO: Move constants to a common place.
         self.entries: list[PlayerListEntry] = [PlayerListEntry(slot, f, self.battle) for slot, f in enumerate(self.battle.getPlayers())]
-        engine.add(self.dialog)
         self.updateText()
-
-    def cleanup(self) -> None:
-        engine.remove(self.dialog)
 
     def updateText(self) -> None:
         for entry in self.entries:
             entry.updateText()
 
     def render(self, surface: pygame.Surface) -> None:
+        self.dialog.render(surface)
         for entry in self.entries:
             entry.render(surface)
 
 class Battle(engine.Entity, model.Observer):
     def __init__(self, battle: model.Battle) -> None:
-        engine.Entity.__init__(self, mode = engine.Entity.MODE_TICK)
+        engine.Entity.__init__(self, mode = engine.Entity.MODE_TICK | engine.Entity.MODE_RENDER)
         model.Observer.__init__(self)
         self.battle: model.Battle = battle
         self.battle.addObserver(self)
         self.backdrop: engine.Backdrop = engine.Backdrop()
-        engine.add(self.backdrop)
         self.enemyList: EnemyList = EnemyList(self.battle)
-        engine.add(self.enemyList)
         self.playerList: PlayerList = PlayerList(self.battle)
-        engine.add(self.playerList)
-        self.fighterEntities = []
-        for fighter in self.battle._fighters: # TODO: Don't access privates.
-            entity = FighterEntity(fighter)
-            self.fighterEntities.append(entity)
-            engine.add(entity)
+        self.fighterEntities: list[FighterEntity] = [FighterEntity(f) for f in self.battle.getPlayers()]
 
     def cleanup(self) -> None:
         self.battle.removeObserver(self)
-        engine.remove(self.backdrop)
-        engine.remove(self.enemyList)
-        engine.remove(self.playerList)
-        for entity in self.fighterEntities:
-            engine.remove(entity)
-
-        for fighter in self.battle._fighters: # TODO: Don't access privates.
-            self.fighterEntities.append(FighterEntity(fighter))
 
     def tick(self) -> None:
         self.battle.tick()
+
+    def render(self, surface: pygame.Surface) -> None:
+        self.backdrop.render(surface)
+        self.enemyList.render(surface)
+        self.playerList.render(surface)
+        for entity in self.fighterEntities:
+            entity.render(surface)
 
     def onTock(self) -> None:
         #showMessage('TOCK')
@@ -172,11 +157,3 @@ class Battle(engine.Entity, model.Observer):
 
     def onStatusRemove(self, fighter: model.Fighter, status: model.Status) -> None:
         pass
-
-"""
-                        # XXX: Doing a basic attack. This should probably live elsewhere. There are other places I look for fighters like this.
-                        players = [f for f in self._fighters if f.faction != fighter.faction]
-                        if players:
-                            self.addAction(model.ActionAttack(fighter, players[0]))
-"""
-

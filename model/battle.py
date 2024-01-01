@@ -153,6 +153,9 @@ class Battle:
     def addFighter(self, fighter: Fighter) -> None:
         self._fighters.append(fighter)
 
+    def getFighters(self) -> list[Fighter]:
+        return list(self._fighters)
+
     def getEnemies(self) -> list[Fighter]:
         return [f for f in self._fighters if f.faction != FACTION_PLAYER]
 
