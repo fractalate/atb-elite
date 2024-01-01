@@ -22,11 +22,19 @@ def drawRectLines(surface: pygame.Surface, rect: pygame.Rect, color: pygame.Colo
     ])
 
 class Dialog(engine.Entity):
-    def __init__(self, grect: pygame.Rect, text: str) -> None:
+    def __init__(self, grect: pygame.Rect, text: None | str = None) -> None:
         engine.Entity.__init__(self, mode = engine.Entity.MODE_INPUT | engine.Entity.MODE_RENDER)
         self.rect: pygame.Rect = engine.gridRectToScreen(grect)
-        self.gcoord: tuple[int, int] = (grect.x, grect.y)
-        self.text: engine.BasicText = engine.BasicText((grect.w, grect.h), text)
+        self.grect: pygame.Rect = grect.copy()
+        self.text: None | engine.BasicText = None
+        if text is not None:
+            self.setText(text)
+
+    def setText(self, text: None | str) -> str:
+        if text is None:
+            self.text = None
+        else:
+            self.text = engine.BasicText((self.grect.w, self.grect.h), text)
 
     def giveInput(self, event: engine.InputEvent) -> bool | None:
         if event == engine.CONFIRM:
@@ -40,7 +48,8 @@ class Dialog(engine.Entity):
         drawRectLines(surface, rect, (0xBB, 0xBB, 0xBB))
         rect = _growRect(rect)
         drawRectLines(surface, rect, (0xFF, 0xFF, 0xFF))
-        self.text.render(surface, self.gcoord)
+        if self.text is not None:
+            self.text.render(surface, (self.grect.x, self.grect.y))
 
 # XXX: Probably a temporary thing.
 class DialogQuick(Dialog):

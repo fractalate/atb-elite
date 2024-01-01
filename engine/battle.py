@@ -8,14 +8,6 @@ import model
 
 # XXX: Temp stuff.
 lines = 0
-names = dict()
-def getNameOf(thing) -> str:
-    result = names.get(thing)
-    if result is None:
-        result = str(thing)
-    return result
-def setNameOf(thing, name: str) -> None:
-    names[thing] = name
 def showMessage(message: str):
     global lines
     width = 20
@@ -27,26 +19,54 @@ def showMessage(message: str):
         lines = 0
     engine.add(engine.DialogQuick(pygame.Rect(x, y, width, height), message))
 
+class EnemyList(engine.Entity):
+    def __init__(self, battle: model.Battle) -> None:
+        engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
+        self.battle: model.Battle = battle
+        self.dialog: engine.Dialog = engine.Dialog(pygame.Rect(0, 20, 18, 4))
+        engine.add(self.dialog)
+        self.updateText()
+
+    def cleanup(self) -> None:
+        engine.remove(self.dialog)
+
+    def updateText(self) -> None:
+        names = [e.name for e in self.battle.getEnemies() if not model.isKO(e)]
+        self.dialog.setText('\n'.join(names))
+
+class PlayerList(engine.Entity):
+    def __init__(self, battle: model.Battle) -> None:
+        engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
+        self.battle: model.Battle = battle
+        self.dialog = engine.Dialog(pygame.Rect(18, 20, 20, 4))
+        engine.add(self.dialog)
+        self.updateText()
+
+    def cleanup(self):
+        engine.remove(self.dialog)
+
+    def updateText(self) -> None:
+        names = [e.name for e in self.battle.getPlayers() if not model.isKO(e)]
+        self.dialog.setText('\n'.join(names))
+
 class Battle(engine.Entity, model.Observer):
     def __init__(self, battle: model.Battle) -> None:
         engine.Entity.__init__(self, mode = engine.Entity.MODE_TICK)
         model.Observer.__init__(self)
         self.battle: model.Battle = battle
-
         self.battle.addObserver(self)
-
-        # XXX: A hack.
-        for fighter in self.battle._fighters:
-            if fighter.faction == model.FACTION_PLAYER:
-                setNameOf(fighter, 'Maximu')
-            else:
-                setNameOf(fighter, 'Batson')
-
-    def tick(self) -> None:
-        self.battle.tick()
+        self.enemyList: EnemyList = EnemyList(self.battle)
+        engine.add(self.enemyList)
+        self.playerList: PlayerList = PlayerList(self.battle)
+        engine.add(self.playerList)
 
     def cleanup(self) -> None:
         self.battle.removeObserver(self)
+        engine.remove(self.enemyList)
+        engine.remove(self.playerList)
+
+    def tick(self) -> None:
+        self.battle.tick()
 
     def onTock(self) -> None:
         #showMessage('TOCK')
@@ -57,9 +77,9 @@ class Battle(engine.Entity, model.Observer):
         if action is None:
             text = 'None'
         elif isinstance(action, model.ActionAttack):
-            text = getNameOf(action.fighter) + ' is attacking ' + getNameOf(action.target)
+            text = action.fighter.name + ' is attacking ' + action.target.name
         elif isinstance(action, model.ActionMove):
-            text = getNameOf(action.fighter) + ' is moving to ' + str(action.coord)
+            text = action.fighter.name + ' is moving to ' + str(action.coord)
         if text is None:
             text = type(action).__name__ + ' ' + str(action)
         showMessage('ACTION: ' + text)
@@ -67,15 +87,15 @@ class Battle(engine.Entity, model.Observer):
     def onEffectApplied(self, effect: model.Effect) -> None:
         text = None
         if isinstance(effect, model.EffectAttack):
-            text = getNameOf(effect.fighter) + ' deals ' + str(effect.attack.damage) + ' damage to ' + getNameOf(effect.target)
+            text = effect.fighter.name + ' deals ' + str(effect.attack.damage) + ' damage to ' + effect.target.name
         elif isinstance(effect, model.EffectMove):
-            text = getNameOf(effect.fighter) + ' moves to ' + str(effect.coord)
+            text = effect.fighter.name + ' moves to ' + str(effect.coord)
         if text is None:
             text = type(effect).__name__ + ' ' + str(effect)
         showMessage('-> ' + text)
 
     def onPlayerFighterReady(self, fighter: model.Fighter) -> None:
-        showMessage('READY: ' + getNameOf(fighter))
+        showMessage('READY: ' + fighter.name)
         if random.randint(0, 1) == 0:
             batson = [f for f in self.battle._fighters if f.faction != fighter.faction][0] # XXX TODO
             self.battle.addAction(model.ActionAttack(fighter, batson))

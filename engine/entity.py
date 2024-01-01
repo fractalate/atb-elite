@@ -19,6 +19,9 @@ class Entity:
         if mode & Entity.MODE_RENDER and mode & Entity.MODE_TICK == 0 and self.ticks != 0:
             raise AssertionError('MODE_RENDER entity has frames set (did you mean to set frames instead?)')
 
+    def cleanup(self) -> None:
+        pass
+
     def giveInput(self, event: engine.InputEvent) -> None | bool:
         pass
 
@@ -26,7 +29,4 @@ class Entity:
         pass
 
     def render(self, surface: pygame.Surface) -> None:
-        pass
-
-    def cleanup(self) -> None:
         pass

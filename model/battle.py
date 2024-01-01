@@ -64,6 +64,7 @@ class Fighter(model.StatsBase):
     def __init__(self) -> None:
         model.StatsBase.__init__(self)
 
+        self.name: str = 'Unnamed'
         self.faction: int = FACTION_PLAYER
 
         self.zone: int = ZONE_LEFT
@@ -151,6 +152,12 @@ class Battle:
 
     def addFighter(self, fighter: Fighter) -> None:
         self._fighters.append(fighter)
+
+    def getEnemies(self) -> list[Fighter]:
+        return [f for f in self._fighters if f.faction != FACTION_PLAYER]
+
+    def getPlayers(self) -> list[Fighter]:
+        return [f for f in self._fighters if f.faction == FACTION_PLAYER]
 
     def tick(self) -> None:
         pauseGauges = False
