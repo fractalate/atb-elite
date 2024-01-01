@@ -12,6 +12,18 @@ def createSampleBattle() -> model.Battle:
     battle.addFighter(fighter)
 
     fighter = model.Fighter()
+    fighter.name = 'Waxus'
+    fighter.actionGauge.limit = 175
+    fighter.hp = fighter.hp_max = 100
+    battle.addFighter(fighter)
+
+    fighter = model.Fighter()
+    fighter.name = 'Vanus'
+    fighter.actionGauge.limit = 200
+    fighter.hp = fighter.hp_max = 100
+    battle.addFighter(fighter)
+
+    fighter = model.Fighter()
     fighter.name = 'Batson'
     fighter.actionGauge.limit = 75
     fighter.hp = fighter.hp_max = 100

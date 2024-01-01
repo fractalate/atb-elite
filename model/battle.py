@@ -158,6 +158,11 @@ class Battle:
 
     def getPlayers(self) -> list[Fighter]:
         return [f for f in self._fighters if f.faction == FACTION_PLAYER]
+    
+    def getPlayerReady(self) -> None | Fighter:
+        if self._playerFighterReadyQueue:
+            return self._playerFighterReadyQueue[0]
+        return None
 
     def tick(self) -> None:
         pauseGauges = False

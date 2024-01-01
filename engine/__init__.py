@@ -34,7 +34,7 @@ FRAME_RATE: int = TICK_RATE
 ### BASIC ENGINE COMPONENTS                                                  ###
 ################################################################################
 
-from engine.grid import gridInit, gridCoordToScreen, gridRectToScreen, GRID_COLS, GRID_ROWS
+from engine.grid import gridInit, gridCoordToScreen, gridRectToScreen, GRID_COLS, GRID_ROWS, GRID_STEP_X, GRID_STEP_Y
 from engine.input import Input, InputEvent
 from engine.input import (
     UP, DOWN, LEFT, RIGHT,

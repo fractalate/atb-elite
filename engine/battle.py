@@ -23,7 +23,7 @@ class EnemyList(engine.Entity):
     def __init__(self, battle: model.Battle) -> None:
         engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
         self.battle: model.Battle = battle
-        self.dialog: engine.Dialog = engine.Dialog(pygame.Rect(0, 20, 18, 4))
+        self.dialog: engine.Dialog = engine.Dialog(pygame.Rect(0, 20, 18, 4)) # TODO: Move constants to a common place.
         engine.add(self.dialog)
         self.updateText()
 
@@ -34,20 +34,63 @@ class EnemyList(engine.Entity):
         names = [e.name for e in self.battle.getEnemies() if not model.isKO(e)]
         self.dialog.setText('\n'.join(names))
 
+class PlayerListEntry:
+    def __init__(self, slot: int, fighter: model.Fighter, battle: model.Battle) -> None:
+        self.slot: int = slot
+        self.fighter: model.Fighter = fighter
+        self.battle: model.Battle = battle
+        self.text: engine.PalletteText = None
+        self.progressBar: ProgressBar = ProgressBar(self.fighter)
+        self.updateText()
+
+    def render(self, surface: pygame.Surface) -> None:
+        self.progressBar.render(surface, pygame.Rect(32 - 3, 20 + self.slot, 3, 1))
+        if self.battle.getPlayerReady() is self.fighter:
+            pallette = engine.PALLETTE_YELLOW
+        elif model.isKO(self.fighter):
+            pallette = engine.PALLETTE_RED
+        else:
+            pallette = engine.PALLETTE_WHITE
+        self.text.render(surface, (18, 20 + self.slot), pallette = pallette) # TODO: Move constants to a common place.
+
+    def updateText(self) -> None:
+        lineText = '{:<6s} {:4d}'.format(self.fighter.name, self.fighter.hp)
+        self.text = engine.PalletteText((17, 1), lineText) # TODO: Move constants to a common place.
+
+class ProgressBar:
+    def __init__(self, fighter: model.Fighter) -> None:
+        self.fighter: model.Fighter = fighter
+
+    def render(self, surface: pygame.Surface, grect: pygame.Rect) -> None:
+        x, y = engine.gridCoordToScreen((grect.x, grect.y))
+        width, height = engine.gridCoordToScreen((grect.w, grect.h))
+        height -= engine.GRID_STEP_Y // 2
+        y += engine.GRID_STEP_Y // 4
+        pygame.draw.rect(surface, (0x00, 0x00, 0x00), (x, y, width, height)) # TODO: Constant color.
+        if self.fighter.actionGauge.value > 0:
+            fillPercent = self.fighter.actionGauge.value / self.fighter.actionGauge.limit
+            fillWidth = fillPercent * width
+            pygame.draw.rect(surface, (0x11, 0xAB, 0x33), (x, y, fillWidth, height)) # TODO: Constant color.
+
 class PlayerList(engine.Entity):
     def __init__(self, battle: model.Battle) -> None:
         engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
         self.battle: model.Battle = battle
-        self.dialog = engine.Dialog(pygame.Rect(18, 20, 20, 4))
+        self.dialog = engine.Dialog(pygame.Rect(18, 20, 20, 4)) # TODO: Move constants to a common place.
+        self.entries: list[PlayerListEntry] = [PlayerListEntry(slot, f, self.battle) for slot, f in enumerate(self.battle.getPlayers())]
         engine.add(self.dialog)
         self.updateText()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         engine.remove(self.dialog)
 
     def updateText(self) -> None:
-        names = [e.name for e in self.battle.getPlayers() if not model.isKO(e)]
-        self.dialog.setText('\n'.join(names))
+        for entry in self.entries:
+            entry.updateText()
+
+    def render(self, surface: pygame.Surface) -> None:
+        for entry in self.entries:
+            entry.render(surface)
 
 class Battle(engine.Entity, model.Observer):
     def __init__(self, battle: model.Battle) -> None:
