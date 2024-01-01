@@ -4,9 +4,6 @@ import textwrap
 
 import engine
 
-
-BORDER_WIDTH = BORDER_HEIGHT = 2
-
 def _growRect(rect: pygame.Rect) -> pygame.Rect:
     x, y, width, height = rect
     return x - 1, y - 1, width + 2, height + 2
@@ -22,6 +19,9 @@ def drawRectLines(surface: pygame.Surface, rect: pygame.Rect, color: pygame.Colo
     ])
 
 class Dialog(engine.Entity):
+    BORDER_WIDTH = 2
+    BORDER_HEIGHT = 2
+
     def __init__(self, grect: pygame.Rect, text: None | str = None) -> None:
         engine.Entity.__init__(self, mode = engine.Entity.MODE_INPUT | engine.Entity.MODE_RENDER)
         self.rect: pygame.Rect = engine.gridRectToScreen(grect)

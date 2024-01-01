@@ -49,6 +49,7 @@ from engine.input import (
  
 from engine.entity import Entity
 
+from engine.backdrop import Backdrop
 from engine.battle import Battle
 from engine.dialog import Dialog, DialogQuick
 from engine.text import BasicText, PalletteText, PALLETTE_WHITE, PALLETTE_RED, PALLETTE_YELLOW

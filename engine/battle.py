@@ -7,17 +7,24 @@ import engine
 import model
 
 # XXX: Temp stuff.
-lines = 0
 def showMessage(message: str):
-    global lines
     width = 20
     height = 3
     x = 0
-    y = lines
-    lines += height
-    if lines >= engine.GRID_ROWS - height:
-        lines = 0
+    y = 0
     engine.add(engine.DialogQuick(pygame.Rect(x, y, width, height), message))
+
+class FighterEntity(engine.Entity):
+    def __init__(self, fighter: model.Fighter) -> None:
+        engine.Entity.__init__(self, engine.Entity.MODE_RENDER)
+        self.fighter: model.Fighter = fighter
+
+    def render(self, surface: pygame.Surface) -> None:
+        if self.fighter.faction == model.FACTION_PLAYER:
+            color = (0x11, 0x88, 0x22)
+        else:
+            color = (0x88, 0x22, 0x11)
+        engine.Backdrop.drawCellsBorder(surface, self.fighter.zone, (self.fighter.zoneX, self.fighter.zoneY, 1, 1), color)
 
 class EnemyList(engine.Entity):
     def __init__(self, battle: model.Battle) -> None:
@@ -98,15 +105,28 @@ class Battle(engine.Entity, model.Observer):
         model.Observer.__init__(self)
         self.battle: model.Battle = battle
         self.battle.addObserver(self)
+        self.backdrop: engine.Backdrop = engine.Backdrop()
+        engine.add(self.backdrop)
         self.enemyList: EnemyList = EnemyList(self.battle)
         engine.add(self.enemyList)
         self.playerList: PlayerList = PlayerList(self.battle)
         engine.add(self.playerList)
+        self.fighterEntities = []
+        for fighter in self.battle._fighters: # TODO: Don't access privates.
+            entity = FighterEntity(fighter)
+            self.fighterEntities.append(entity)
+            engine.add(entity)
 
     def cleanup(self) -> None:
         self.battle.removeObserver(self)
+        engine.remove(self.backdrop)
         engine.remove(self.enemyList)
         engine.remove(self.playerList)
+        for entity in self.fighterEntities:
+            engine.remove(entity)
+
+        for fighter in self.battle._fighters: # TODO: Don't access privates.
+            self.fighterEntities.append(FighterEntity(fighter))
 
     def tick(self) -> None:
         self.battle.tick()
