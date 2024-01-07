@@ -1,5 +1,4 @@
 from model import Action, Effect, Fighter, Status
-from model import EffectAssignAction
 from model import FACTION_PLAYER
 import random
 
@@ -7,6 +6,8 @@ class Battle:
     def __init__(self) -> None:
         self.fighters: list[Fighter] = []
         self.actionQueue: list[Action] = []
+        self.effectQueue: list[Effect] = []
+        # The game reads this list to see what has happened during the tick.
         self.effects: list[Effect] = []
 
     def tick(self) -> None:
@@ -19,7 +20,7 @@ class Battle:
             pauseFight = currentAction.mode == Action.MODE_PAUSE
             currentAction.ticks -= 1
             if currentAction.isTickDue():
-                currentAction.tick(self)
+                currentAction.tick()
             if currentAction.isExpired():
                 self.actionQueue = self.actionQueue[1:]
 
@@ -66,21 +67,22 @@ class Battle:
                     if fighter.chargeStatus.isExpired():
                         fighter.chargeStatus = None
 
-        while self.effects:
-            effect, self.effects = self.effects[0], self.effects[1:]
-            effect.apply()
+        self.effects.clear()
+        while self.effectQueue:
+            effect, self.effectQueue = self.effectQueue[0], self.effectQueue[1:]
+            self.applyEffect(effect)
 
     def getOpponents(self, faction: int) -> list[Fighter]:
         return [f for f in self.fighters if f.faction != faction]
 
     def tickConfuseFighter(self, fighter: Fighter) -> None:
-        from model import ActionAttack # XXX: Avoiding circular imports.
+        from model import ActionAttack, EffectAssignAction # XXX: Avoiding circular imports.
         target = random.choice(self.fighters)
         action = ActionAttack(self, fighter, target)
         self.addEffect(EffectAssignAction(self, fighter, action))
 
     def tickDefaultAction(self, fighter: Fighter) -> None:
-        from model import ActionAttack # XXX: Avoiding circular imports.
+        from model import ActionAttack, EffectAssignAction # XXX: Avoiding circular imports.
         opponents = self.getOpponents(fighter.faction)
         if opponents:
             target = random.choice(opponents)
@@ -92,5 +94,10 @@ class Battle:
             return self.actionQueue[0]
         return None
 
-    def addEffect(self, effect: Effect) -> None:
+    # You should use addEffect() almost surely. Use this for player input actions and battle setup.
+    def applyEffect(self, effect: Effect) -> None:
+        effect.apply()
         self.effects.append(effect)
+
+    def addEffect(self, effect: Effect) -> None:
+        self.effectQueue.append(effect)

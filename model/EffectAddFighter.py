@@ -7,6 +7,6 @@ class EffectAddFighter(Effect):
         self.fighter: Fighter = fighter
 
     def apply(self) -> None:
-        if self.fighter not in self.battle:
+        if self.fighter not in self.battle.fighters:
             self.battle.fighters.append(self.fighter)
 

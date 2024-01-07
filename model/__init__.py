@@ -21,8 +21,8 @@ from model.BattleFieldCell import BattleFieldCell
 from model.Clocked import Clocked
 from model.FighterActionGauge import FighterActionGauge
 from model.Script import Script
-from model.StatsBase import StatsBase
 from model.StatsDamage import StatsDamage
+from model.StatsBase import StatsBase
 
 # Base classes for things which go on during the battle.
 # These depend on the imports above.

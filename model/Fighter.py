@@ -8,9 +8,9 @@ class Fighter(StatsBase):
         self.faction: int = FACTION_PLAYER
         self.zone: int = ZONE_LEFT
         self.coord: tuple[int, int] = 0
-        self.action: None | Action = []
+        self.action: None | Action = None
         self.statuses: list[Status] = []
-        self.chargeStatus: None | Status = []
+        self.chargeStatus: None | Status = None
         self.actionGauge: FighterActionGauge = FighterActionGauge()
         self.script: None | Script = None
 

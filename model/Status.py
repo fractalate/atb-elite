@@ -1,4 +1,4 @@
-from model import Clocked, Battle
+from model import Clocked
 
 class Status(Clocked):
     @staticmethod

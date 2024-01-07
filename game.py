@@ -1,6 +1,7 @@
+import pygame
 from model import Battle, Fighter
 from model import EffectAddFighter, EffectAssignAction
-from model import ZONE_LEFT, ZONE_RIGHT, FACTION_OTHER
+from model import FACTION_OTHER, TICK_RATE, ZONE_LEFT, ZONE_RIGHT
 
 def createSampleBattle() -> Battle:
     battle = Battle()
@@ -11,7 +12,7 @@ def createSampleBattle() -> Battle:
     fighter.coord = (1, 0)
     fighter.actionGauge.limit = 100
     fighter.hp = fighter.hp_max = 100
-    EffectAddFighter(battle, fighter).apply()
+    battle.applyEffect(EffectAddFighter(battle, fighter))
 
     fighter = Fighter()
     fighter.name = 'Batson A'
@@ -20,10 +21,21 @@ def createSampleBattle() -> Battle:
     fighter.actionGauge.limit = 75
     fighter.hp = fighter.hp_max = 100
     fighter.faction = FACTION_OTHER
-    EffectAddFighter(battle, fighter).apply()
+    battle.applyEffect(EffectAddFighter(battle, fighter))
 
     return battle
 
-battle = Battle()
+def narrateBattle(battle: Battle):
+    if battle.effects:
+        print()
+        for effect in battle.effects:
+            print(type(effect), effect)
+
+clock = pygame.time.Clock()
+battle = createSampleBattle()
+narrateBattle(battle)
+clock.tick(TICK_RATE)
 while True:
     battle.tick()
+    narrateBattle(battle)
+    clock.tick(TICK_RATE)
