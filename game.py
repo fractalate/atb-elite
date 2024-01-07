@@ -1,48 +1,29 @@
-import engine
+from model import Battle, Fighter
+from model import EffectAddFighter, EffectAssignAction
+from model import ZONE_LEFT, ZONE_RIGHT, FACTION_OTHER
 
-import model
+def createSampleBattle() -> Battle:
+    battle = Battle()
 
-def createSampleBattle() -> model.Battle:
-    battle = model.Battle()
-
-    fighter = model.Fighter()
+    fighter = Fighter()
     fighter.name = 'Maximu'
-    fighter.zone = model.ZONE_RIGHT
-    fighter.zoneX = 1
-    fighter.zoneY = 0
+    fighter.zone = ZONE_RIGHT
+    fighter.coord = (1, 0)
     fighter.actionGauge.limit = 100
     fighter.hp = fighter.hp_max = 100
-    battle.addFighter(fighter)
+    EffectAddFighter(battle, fighter).apply()
 
-    fighter = model.Fighter()
-    fighter.name = 'Waxus'
-    fighter.zone = model.ZONE_RIGHT
-    fighter.zoneX = 1
-    fighter.zoneY = 1
-    fighter.actionGauge.limit = 175
-    fighter.hp = fighter.hp_max = 100
-    battle.addFighter(fighter)
-
-    fighter = model.Fighter()
-    fighter.name = 'Vanus'
-    fighter.zone = model.ZONE_RIGHT
-    fighter.zoneX = 1
-    fighter.zoneY = 2
-    fighter.actionGauge.limit = 200
-    fighter.hp = fighter.hp_max = 100
-    battle.addFighter(fighter)
-
-    fighter = model.Fighter()
-    fighter.name = 'Batson'
-    fighter.zone = model.ZONE_LEFT
-    fighter.zoneX = 1
-    fighter.zoneY = 2
+    fighter = Fighter()
+    fighter.name = 'Batson A'
+    fighter.zone = ZONE_LEFT
+    fighter.coord = (0, 0)
     fighter.actionGauge.limit = 75
     fighter.hp = fighter.hp_max = 100
-    fighter.faction = model.FACTION_OTHER
-    battle.addFighter(fighter)
+    fighter.faction = FACTION_OTHER
+    EffectAddFighter(battle, fighter).apply()
 
     return battle
 
-engine.add(engine.Battle(createSampleBattle()))
-engine.run()
+battle = Battle()
+while True:
+    battle.tick()

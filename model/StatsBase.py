@@ -1,3 +1,5 @@
+from model import StatsDamage
+
 class StatsBase:
     def __init__(self):
         self.hp: int = 0
@@ -17,10 +19,3 @@ class StatsBase:
 
         self.damage: StatsDamage = StatsDamage()
         self.resist: StatsDamage = StatsDamage()
-
-class StatsDamage:
-    def __init__(self):
-        self.physical: int = 0
-        self.elemental: int = 0
-        self.mystical: int = 0
-        self.psychic: int = 0
